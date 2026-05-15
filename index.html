@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CENG510 — Real-Time Reflection Techniques</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="./style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__title">
+      <span class="topbar__course">CENG510</span>
+      <span class="topbar__divider">—</span>
+      <span>Real-Time Reflection Techniques</span>
+    </div>
+    <div class="topbar__links">
+      <button id="aboutBtn" class="link-btn" type="button">About</button>
+      <a class="link-btn" href="https://github.com/" target="_blank" rel="noopener">Code</a>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="viewport">
+      <canvas id="canvas"></canvas>
+      <div id="offscreenIndicator" class="offscreen-indicator" hidden>
+        <span class="offscreen-indicator__arrow">▲</span>
+        <span>Hidden cube</span>
+      </div>
+      <div id="perfOverlay" class="perf-overlay">
+        <div><span class="perf-overlay__label">FPS</span><span id="fpsValue">—</span></div>
+        <div><span class="perf-overlay__label">Frame</span><span id="frameValue">—</span> ms</div>
+      </div>
+      <details id="methodInfo" class="method-info" open>
+        <summary>
+          <span>Technique notes</span>
+          <span id="methodInfoBadge" class="method-info__badge">Cubemap</span>
+        </summary>
+        <div class="method-info__body">
+          <h3 id="methodInfoTitle">Cubemap</h3>
+          <p id="methodInfoHow"></p>
+          <div class="method-info__test">
+            <strong>Try this</strong>
+            <p id="methodInfoTry"></p>
+          </div>
+        </div>
+      </details>
+      <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-overlay__spinner"></div>
+        <div class="loading-overlay__text">Loading environment…</div>
+      </div>
+    </section>
+
+    <aside class="sidepanel">
+      <section class="panel-group">
+        <h2 class="panel-group__title">Reflection Mode</h2>
+        <label class="radio">
+          <input type="radio" name="mode" value="cubemap" checked />
+          <span>Cubemap</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="mode" value="planar" />
+          <span>Planar</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="mode" value="ssr" />
+          <span>SSR</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="mode" value="ssrFallback" />
+          <span>SSR + Cubemap fallback</span>
+        </label>
+        <label class="radio radio--disabled" title="Requires hardware ray tracing — out of scope for WebGL">
+          <input type="radio" name="mode" value="hybrid" disabled />
+          <span>Hybrid Ray Tracing <em>(disabled)</em></span>
+        </label>
+      </section>
+
+      <section class="panel-group">
+        <h2 class="panel-group__title">Roughness</h2>
+        <div class="slider-row">
+          <input type="range" id="roughness" min="0" max="1" step="0.01" value="0.2" />
+          <output id="roughnessValue">0.20</output>
+        </div>
+        <p class="panel-group__hint">Floor only. Sphere stays glossy as a reference.</p>
+      </section>
+
+      <section class="panel-group">
+        <h2 class="panel-group__title">Surfaces</h2>
+        <label class="check">
+          <input type="checkbox" id="extraReflectors" />
+          <span>Side mirrors</span>
+        </label>
+        <p class="panel-group__hint">Adds two vertical reflective panels.</p>
+      </section>
+
+      <section class="panel-group">
+        <h2 class="panel-group__title">Camera</h2>
+        <button id="resetView" class="btn" type="button">Reset View</button>
+        <button id="lookAtHidden" class="btn" type="button">Look at Hidden Cube</button>
+      </section>
+
+      <section class="panel-group">
+        <h2 class="panel-group__title">Debug</h2>
+        <label class="check">
+          <input type="checkbox" id="showDepth" />
+          <span>Show depth buffer</span>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="showRays" />
+          <span>Show SSR hit mask</span>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="showOffscreen" />
+          <span>Show off-screen indicator</span>
+        </label>
+      </section>
+
+      <section class="panel-group">
+        <h2 class="panel-group__title">Performance</h2>
+        <div class="metric"><span>FPS</span><span id="fpsMetric">—</span></div>
+        <div class="metric"><span>Frame time</span><span id="frameMetric">—</span> ms</div>
+        <div class="metric"><span>SSR time</span><span id="ssrMetric">—</span> ms</div>
+      </section>
+    </aside>
+  </main>
+
+  <div id="aboutModal" class="modal" hidden>
+    <div class="modal__backdrop" data-close-modal></div>
+    <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+      <header class="modal__header">
+        <h2 id="aboutTitle">About this project</h2>
+        <button class="modal__close" type="button" data-close-modal aria-label="Close">×</button>
+      </header>
+      <div class="modal__body">
+        <p>
+          An interactive comparison tool for three real-time reflection techniques —
+          cubemap, planar, and screen-space — built for the CENG510 final project at
+          Çukurova University.
+        </p>
+        <p>
+          Each technique fixes the previous one's biggest failure and introduces a
+          new limitation. Toggle modes, adjust roughness, and orbit the camera to
+          watch the trade-offs play out live.
+        </p>
+        <h3>The progression</h3>
+        <table class="modal__table">
+          <thead><tr><th>Year</th><th>Technique</th><th>What it fixed</th><th>New limitation</th></tr></thead>
+          <tbody>
+            <tr><td>1976</td><td>Cubemaps</td><td>Real-time reflections at all</td><td>No parallax, frozen in time</td></tr>
+            <tr><td>1990s</td><td>Planar</td><td>Pixel-perfect for flat surfaces</td><td>Flat surfaces only; 2× cost</td></tr>
+            <tr><td>2014</td><td>SSR</td><td>Any shape; reuses frame data</td><td>Only on-screen content</td></tr>
+            <tr><td>2018+</td><td>Hybrid RT</td><td>Sees full 3D scene</td><td>Requires RT hardware</td></tr>
+          </tbody>
+        </table>
+        <h3>Try this</h3>
+        <ul>
+          <li>Switch to <strong>SSR</strong>, then click <em>Look at Hidden Cube</em> — watch it appear.</li>
+          <li>Orbit until objects leave the frame — their reflections vanish too.</li>
+          <li>Drag the roughness slider; compare how each mode blurs.</li>
+          <li>Enable <strong>Side mirrors</strong> in planar mode; compare the stronger reflections against the frame-time cost.</li>
+        </ul>
+        <h3>References</h3>
+        <ul>
+          <li>
+            <a href="https://jcgt.org/published/0003/04/04/paper.pdf" target="_blank" rel="noopener">
+              McGuire &amp; Mara (2014), Efficient GPU Screen-Space Ray Tracing
+            </a>
+          </li>
+          <li>
+            <a href="https://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_slides.pdf" target="_blank" rel="noopener">
+              Karis (2013), Real Shading in Unreal Engine 4
+            </a>
+          </li>
+          <li>
+            <a href="https://www.ea.com/frostbite/news/stochastic-screen-space-reflections" target="_blank" rel="noopener">
+              Stachowiak (2015), Stochastic Screen-Space Reflections
+            </a>
+          </li>
+          <li>
+            <a href="https://people.csail.mit.edu/ericchan/bib/pdf/p542-blinn.pdf" target="_blank" rel="noopener">
+              Blinn &amp; Newell (1976), Texture and Reflection in Computer Generated Images
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
