@@ -10,6 +10,8 @@ adds two more reflective surfaces in every mode; in planar mode those become
 two additional planar render passes, making the cost easy to see in the FPS
 overlay.
 
+**Live demo:** [https://utkuaturen.github.io/Real-Time-Reflection-Techniques-Comparison/](https://utkuaturen.github.io/Real-Time-Reflection-Techniques-Comparison/)
+
 ## The Story
 
 | Year | Technique | What it fixed | New limitation |
@@ -51,8 +53,15 @@ One-time GitHub setup:
    the Actions tab.
 
 The deployed project URL will be shown in the workflow summary. Before final
-submission, replace the top-bar `Code` link in `index.html` with the real
+submission, verify the top-bar `Code` link in `index.html` points to the real
 repository URL.
+
+If the workflow fails at `actions/configure-pages` with `Get Pages site failed`,
+the repository has not been configured for Pages yet. Open **Settings → Pages**
+and set **Source** to **GitHub Actions**, then rerun the workflow. The action's
+automatic `enablement` mode requires a token stronger than the default
+`GITHUB_TOKEN`, so the manual settings step is the simpler path for this
+project.
 
 ## Visual Smoke Test
 
@@ -147,8 +156,9 @@ mask, updates the SSR timing metric, has cubemap fallback mode wired, and shows
 collapsible per-technique notes in the viewport. The optional side-mirror toggle
 adds two vertical reflective panels across all modes; planar mode swaps those
 panels for two additional true planar reflectors.
-Remaining work is final packaging: push the repo, enable GitHub Pages, set the
-real repository URL in the top bar, and prepare the final report material.
+The GitHub Pages deployment is live at
+[https://utkuaturen.github.io/Real-Time-Reflection-Techniques-Comparison/](https://utkuaturen.github.io/Real-Time-Reflection-Techniques-Comparison/).
+Remaining work is final report material and any last presentation polish.
 
 ## References
 
